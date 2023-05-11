@@ -21,16 +21,16 @@ import torchvision.datasets as datasets
 
 import augmentations as aug
 from distributed import init_distributed_mode
-
+from custom_resnet import custom_Resnet,Resnet_block
 import resnet
 
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Pretrain a resnet model with VICReg", add_help=False)
 
-    # Data
-    parser.add_argument("--data-dir", type=Path, default="/path/to/imagenet", required=True,
-                        help='Path to the image net dataset')
+    # # Data
+    # parser.add_argument("--data-dir", type=Path, default="/path/to/imagenet", required=True,
+    #                     help='Path to the image net dataset')
 
     # Checkpoints
     parser.add_argument("--exp-dir", type=Path, default="./exp",
@@ -41,17 +41,17 @@ def get_arguments():
     # Model
     parser.add_argument("--arch", type=str, default="resnet50",
                         help='Architecture of the backbone encoder network')
-    parser.add_argument("--mlp", default="8192-8192-8192",
+    parser.add_argument("--mlp", default="512-512-512",
                         help='Size and number of layers of the MLP expander head')
 
     # Optim
     parser.add_argument("--epochs", type=int, default=100,
                         help='Number of epochs')
-    parser.add_argument("--batch-size", type=int, default=2048,
+    parser.add_argument("--batch-size", type=int, default=512,
                         help='Effective batch size (per worker batch size is [batch-size] / world-size)')
-    parser.add_argument("--base-lr", type=float, default=0.2,
+    parser.add_argument("--base-lr", type=float, default=0.05,
                         help='Base learning rate, effective learning after warmup is [base-lr] * [batch-size] / 256')
-    parser.add_argument("--wd", type=float, default=1e-6,
+    parser.add_argument("--wd", type=float, default=1e-4,
                         help='Weight decay')
 
     # Loss
@@ -63,7 +63,7 @@ def get_arguments():
                         help='Covariance regularization loss coefficient')
 
     # Running
-    parser.add_argument("--num-workers", type=int, default=10)
+    parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
 
@@ -79,33 +79,28 @@ def get_arguments():
 
 def main(args):
     torch.backends.cudnn.benchmark = True
-    init_distributed_mode(args)
     print(args)
     gpu = torch.device(args.device)
 
-    if args.rank == 0:
-        args.exp_dir.mkdir(parents=True, exist_ok=True)
-        stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
-        print(" ".join(sys.argv))
-        print(" ".join(sys.argv), file=stats_file)
+    args.exp_dir.mkdir(parents=True, exist_ok=True)
+    stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
+    print(" ".join(sys.argv))
+    print(" ".join(sys.argv), file=stats_file)
 
     transforms = aug.TrainTransform()
 
-    dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
-    sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
-    assert args.batch_size % args.world_size == 0
-    per_device_batch_size = args.batch_size // args.world_size
+    dataset= datasets.CIFAR10(root='../data', train=True,
+                                        download=True, transform=transforms)
     loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=per_device_batch_size,
+        batch_size=args.batch_size,
         num_workers=args.num_workers,
         pin_memory=True,
-        sampler=sampler,
+        shuffle=True,
     )
 
+
     model = VICReg(args).cuda(gpu)
-    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
     optimizer = LARS(
         model.parameters(),
         lr=0,
@@ -127,10 +122,11 @@ def main(args):
     start_time = last_logging = time.time()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
-        sampler.set_epoch(epoch)
+    
+
         for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):
-            x = x.cuda(gpu, non_blocking=True)
-            y = y.cuda(gpu, non_blocking=True)
+            x = x.cuda(non_blocking=True)
+            y = y.cuda(non_blocking=True)
 
             lr = adjust_learning_rate(args, optimizer, loader, step)
 
@@ -142,7 +138,7 @@ def main(args):
             scaler.update()
 
             current_time = time.time()
-            if args.rank == 0 and current_time - last_logging > args.log_freq_time:
+            if current_time - last_logging > args.log_freq_time:
                 stats = dict(
                     epoch=epoch,
                     step=step,
@@ -151,17 +147,16 @@ def main(args):
                     lr=lr,
                 )
                 print(json.dumps(stats))
-                print(json.dumps(stats), file=stats_file)
                 last_logging = current_time
-        if args.rank == 0:
-            state = dict(
-                epoch=epoch + 1,
-                model=model.state_dict(),
-                optimizer=optimizer.state_dict(),
-            )
-            torch.save(state, args.exp_dir / "model.pth")
-    if args.rank == 0:
-        torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+        state = dict(
+            epoch=epoch + 1,
+            model=model.state_dict(),
+            optimizer=optimizer.state_dict(),
+        )
+        torch.save(state, args.exp_dir / "model.pth")
+
+    torch.save(model.backbone.state_dict(), args.exp_dir / "resnet_backbone.pth")
+
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -186,9 +181,7 @@ class VICReg(nn.Module):
         super().__init__()
         self.args = args
         self.num_features = int(args.mlp.split("-")[-1])
-        self.backbone, self.embedding = resnet.__dict__[args.arch](
-            zero_init_residual=True
-        )
+        self.backbone, self.embedding = custom_Resnet(Resnet_block,32,[13,13,13]),128
         self.projector = Projector(args, self.embedding)
 
     def forward(self, x, y):
@@ -197,8 +190,8 @@ class VICReg(nn.Module):
 
         repr_loss = F.mse_loss(x, y)
 
-        x = torch.cat(FullGatherLayer.apply(x), dim=0)
-        y = torch.cat(FullGatherLayer.apply(y), dim=0)
+        x = torch.cat(x, dim=0)
+        y = torch.cat(y, dim=0)
         x = x - x.mean(dim=0)
         y = y - y.mean(dim=0)
 
@@ -218,6 +211,7 @@ class VICReg(nn.Module):
             + self.args.cov_coeff * cov_loss
         )
         return loss
+
 
 
 def Projector(args, embedding):
@@ -299,37 +293,37 @@ class LARS(optim.Optimizer):
                 p.add_(mu, alpha=-g["lr"])
 
 
-def batch_all_gather(x):
-    x_list = FullGatherLayer.apply(x)
-    return torch.cat(x_list, dim=0)
+# def batch_all_gather(x):
+#     x_list = FullGatherLayer.apply(x)
+#     return torch.cat(x_list, dim=0)
 
 
-class FullGatherLayer(torch.autograd.Function):
-    """
-    Gather tensors from all process and support backward propagation
-    for the gradients across processes.
-    """
+# class FullGatherLayer(torch.autograd.Function):
+#     """
+#     Gather tensors from all process and support backward propagation
+#     for the gradients across processes.
+#     """
 
-    @staticmethod
-    def forward(ctx, x):
-        output = [torch.zeros_like(x) for _ in range(dist.get_world_size())]
-        dist.all_gather(output, x)
-        return tuple(output)
+#     @staticmethod
+#     def forward(ctx, x):
+#         output = [torch.zeros_like(x) for _ in range(dist.get_world_size())]
+#         dist.all_gather(output, x)
+#         return tuple(output)
 
-    @staticmethod
-    def backward(ctx, *grads):
-        all_gradients = torch.stack(grads)
-        dist.all_reduce(all_gradients)
-        return all_gradients[dist.get_rank()]
-
-
-def handle_sigusr1(signum, frame):
-    os.system(f'scontrol requeue {os.environ["SLURM_JOB_ID"]}')
-    exit()
+#     @staticmethod
+#     def backward(ctx, *grads):
+#         all_gradients = torch.stack(grads)
+#         dist.all_reduce(all_gradients)
+#         return all_gradients[dist.get_rank()]
 
 
-def handle_sigterm(signum, frame):
-    pass
+# def handle_sigusr1(signum, frame):
+#     os.system(f'scontrol requeue {os.environ["SLURM_JOB_ID"]}')
+#     exit()
+
+
+# def handle_sigterm(signum, frame):
+#     pass
 
 
 if __name__ == "__main__":
