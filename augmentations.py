@@ -9,19 +9,20 @@ from PIL import ImageOps, ImageFilter
 import numpy as np
 import torchvision.transforms as transforms
 from torchvision.transforms import InterpolationMode
+import torch
 
+import torchvision.transforms.functional as TF
 
-class GaussianBlur(object):
+class GaussianBlur(torch.nn.Module):
     def __init__(self, p):
+        super().__init__()
         self.p = p
 
-    def __call__(self, img):
-        if np.random.rand() < self.p:
-            sigma = np.random.rand() * 1.9 + 0.1
-            return img.filter(ImageFilter.GaussianBlur(sigma))
-        else:
-            return img
-
+    def forward(self, img):
+        if torch.rand(1) < self.p:
+            sigma = torch.rand(1) * 1.9 + 0.1
+            img = TF.gaussian_blur(img, kernel_size=5, sigma=sigma.item())
+        return img
 
 class Solarization(object):
     def __init__(self, p):
@@ -38,9 +39,7 @@ class TrainTransform(object):
     def __init__(self):
         self.transform = transforms.Compose(
             [
-                transforms.RandomResizedCrop(
-                    224, interpolation=InterpolationMode.BICUBIC
-                ),
+                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomApply(
                     [
@@ -51,19 +50,17 @@ class TrainTransform(object):
                     p=0.8,
                 ),
                 transforms.RandomGrayscale(p=0.2),
-                GaussianBlur(p=1.0),
-                Solarization(p=0.0),
+                GaussianBlur(p=0.5),  # instantiate GaussianBlur with p=0.5
+                Solarization(p=0.2),
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]
                 ),
             ]
         )
         self.transform_prime = transforms.Compose(
             [
-                transforms.RandomResizedCrop(
-                    224, interpolation=InterpolationMode.BICUBIC
-                ),
+                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomApply(
                     [
@@ -78,10 +75,11 @@ class TrainTransform(object):
                 Solarization(p=0.2),
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]
                 ),
             ]
         )
+
 
     def __call__(self, sample):
         x1 = self.transform(sample)

@@ -49,7 +49,7 @@ def get_arguments():
                         help='Number of epochs')
     parser.add_argument("--batch-size", type=int, default=512,
                         help='Effective batch size (per worker batch size is [batch-size] / world-size)')
-    parser.add_argument("--base-lr", type=float, default=0.05,
+    parser.add_argument("--base-lr", type=float, default=0.1,
                         help='Base learning rate, effective learning after warmup is [base-lr] * [batch-size] / 256')
     parser.add_argument("--wd", type=float, default=1e-4,
                         help='Weight decay')
@@ -147,6 +147,7 @@ def main(args):
                     lr=lr,
                 )
                 print(json.dumps(stats))
+                print(json.dumps(stats), file=stats_file)
                 last_logging = current_time
         state = dict(
             epoch=epoch + 1,
