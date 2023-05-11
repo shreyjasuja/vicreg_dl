@@ -190,8 +190,8 @@ class VICReg(nn.Module):
 
         repr_loss = F.mse_loss(x, y)
 
-        x = torch.cat(x, dim=0)
-        y = torch.cat(y, dim=0)
+        # x = torch.cat(x, dim=0)
+        # y = torch.cat(y, dim=0)
         x = x - x.mean(dim=0)
         y = y - y.mean(dim=0)
 
