@@ -33,7 +33,6 @@ class Solarization(object):
         else:
             return img
 
-
 class TrainTransform(object):
     def __init__(self):
         self.transform = transforms.Compose(
@@ -55,7 +54,7 @@ class TrainTransform(object):
                 Solarization(p=0.0),
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    mean=[0.4332, 0.3757, 0.3340], std=[0.2711, 0.2446, 0.2346]
                 ),
             ]
         )
@@ -78,12 +77,28 @@ class TrainTransform(object):
                 Solarization(p=0.2),
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    mean=[0.4332, 0.3757, 0.3340], std=[0.2711, 0.2446, 0.2346]
                 ),
             ]
         )
+        self.simple_transform= transforms.Compose(
+            [transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.4332, 0.3757, 0.3340], std=[0.2711, 0.2446, 0.2346]
+                )]
+        )
 
     def __call__(self, sample):
-        x1 = self.transform(sample)
-        x2 = self.transform_prime(sample)
-        return x1, x2
+        img1, img2, target = sample
+        if target == 1:
+            img1=self.simple_transform(img1)
+            img2=self.simple_transform(img2)
+            return img1, img2
+        else:
+            x11 = self.transform(img1)
+            x21 = self.transform_prime(img1)
+            x12 = self.transform(img2)
+            x22 = self.transform(img2)
+            return (x11, x21), (x12, x22)
+
