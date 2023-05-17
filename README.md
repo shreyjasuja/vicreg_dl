@@ -1,5 +1,4 @@
-# vicreg_dl
-VICReg implementation
+# Deep Learning Final Project
 
 ## Overview:
 This project focuses on the implementation and evaluation of
