@@ -16,6 +16,18 @@ After training the model on CIFAR100 using self-supervised learning, we evaluate
 These accuracies might seem lower than standard at first glance but we need to remember that these models were fine-tuned only on 1% and 10% of the low-resolution CIFAR10 dataset. 
 For comparison, refer to the untrained backbone accuracies which prove that the SSL indeed gave the network more capability for the downstream task.
 
+Step 1: Download [exp folder](https://github.com/shreyjasuja/cifar_10_custom_resnet) and move it inside objective-1-CIFAR-SSL-training folder.
+
+Step 2: Install dependencies via 
+```
+pip install torch torchvision matplotlib seaborn scikit-learn pandas
+```
+Step 3: For Training: 
+```
+python main_vicreg.py --batch-size 512 --mlp '512-512-512'
+```
+Step 4: Run the notebook ssl_eval.ipynb to reproduce the results.
+
 [Add accuracies table screenshot]
 
 ![download](https://github.com/shreyjasuja/vicreg_dl/assets/30201131/0228baeb-859c-49b8-9e4c-74f06e30507c)
@@ -26,6 +38,15 @@ was originally trained on Imagenet, and fine-tuned it on the
 ”Labeled Faces in the Wild” (LFW) dataset. The objective is
 to apply the learned SSL representations to the face recogni-
 tion task.
+
+Step 1: Download [exp folder](https://github.com/shreyjasuja/cifar_10_custom_resnet) and move it inside objective-1-CIFAR-SSL-training folder.
+
+Step 2: Install dependencies via 
+```
+pip install torch torchvision matplotlib seaborn scikit-learn pandas
+```
+
+Step 3: Run the notebooks lfw_ssl.ipynb and lfw_eval.ipynb to reproduce the results.
 
 Result of grouping similar faces using ANNOY:
 
