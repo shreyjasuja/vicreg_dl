@@ -11,7 +11,7 @@ and a Siamese-based VICReg network for training.
 ## Objective 1: SSL training using VICReg on CIFAR Dataset
 We used the custom resnet model architecture that we created in the [Mini-Project](https://github.com/shreyjasuja/cifar_10_custom_resnet).
 
-After training the model on CIFAR100 using self-supervised learning, we evaluated the model on 10% CIFAR10 dataset.
+After training the model on CIFAR100 using self-supervised learning, we evaluated the model on CIFAR-10 test data.
 
 These accuracies might seem lower than standard at first glance but we need to remember that these models were fine-tuned only on 1% and 10% of the low-resolution CIFAR10 dataset. 
 For comparison, refer to the untrained backbone accuracies which prove that the SSL indeed gave the network more capability for the downstream task.
