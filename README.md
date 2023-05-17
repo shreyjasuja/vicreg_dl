@@ -18,15 +18,7 @@ For comparison, refer to the untrained backbone accuracies which prove that the 
 
 Step 1: Download [exp folder](https://drive.google.com/drive/folders/1YvShKyGbXxjqYAgbzIsw_lyoyLXMsKYM?usp=share_link) and move it inside objective-1-CIFAR-SSL-training folder.
 
-Step 2: Install dependencies via 
-```
-pip install torch torchvision matplotlib seaborn scikit-learn pandas
-```
-Step 3: For Training: 
-```
-python main_vicreg.py --batch-size 512 --mlp '512-512-512'
-```
-Step 4: Run the notebook ssl_eval.ipynb to reproduce the results.
+Step 2: Run the notebook ssl_eval.ipynb to reproduce the results.
 
 ![WhatsApp Image 2023-05-16 at 11 43 34 PM](https://github.com/shreyjasuja/vicreg_dl/assets/30201131/364547bc-9ae1-4ba9-b1b5-512aa60aa94e)
 ![download](https://github.com/shreyjasuja/vicreg_dl/assets/30201131/0228baeb-859c-49b8-9e4c-74f06e30507c)
@@ -40,12 +32,7 @@ tion task.
 
 Step 1: Download [exp folder](https://drive.google.com/drive/folders/1LB_KcYa3bsCKaBAOKTaEn1WbCVj9PmXx?usp=share_link) and move it inside objective-1-CIFAR-SSL-training folder.
 
-Step 2: Install dependencies via 
-```
-pip install torch torchvision matplotlib seaborn scikit-learn pandas
-```
-
-Step 3: Run the notebooks lfw_ssl.ipynb and lfw_eval.ipynb to reproduce the results.
+Step 2: Run the notebooks lfw_ssl.ipynb and lfw_eval.ipynb to reproduce the results.
 
 Result of grouping similar faces using ANNOY:
 
