@@ -16,7 +16,7 @@ After training the model on CIFAR100 using self-supervised learning, we evaluate
 These accuracies might seem lower than standard at first glance but we need to remember that these models were fine-tuned only on 1% and 10% of the low-resolution CIFAR10 dataset. 
 For comparison, refer to the untrained backbone accuracies which prove that the SSL indeed gave the network more capability for the downstream task.
 
-Step 1: Download [exp folder](https://github.com/shreyjasuja/cifar_10_custom_resnet) and move it inside objective-1-CIFAR-SSL-training folder.
+Step 1: Download [exp folder](https://drive.google.com/drive/folders/1YvShKyGbXxjqYAgbzIsw_lyoyLXMsKYM?usp=share_link) and move it inside objective-1-CIFAR-SSL-training folder.
 
 Step 2: Install dependencies via 
 ```
@@ -39,7 +39,7 @@ was originally trained on Imagenet, and fine-tuned it on the
 to apply the learned SSL representations to the face recogni-
 tion task.
 
-Step 1: Download [exp folder](https://github.com/shreyjasuja/cifar_10_custom_resnet) and move it inside objective-1-CIFAR-SSL-training folder.
+Step 1: Download [exp folder](https://drive.google.com/drive/folders/1LB_KcYa3bsCKaBAOKTaEn1WbCVj9PmXx?usp=share_link) and move it inside objective-1-CIFAR-SSL-training folder.
 
 Step 2: Install dependencies via 
 ```
