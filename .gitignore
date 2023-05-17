@@ -2,3 +2,7 @@
 .ipynb_checkpoints/
 __pycache__/
 .DS_store
+objective-1-CIFAR-SSL-training/exp/resnet_backbone_2.pth
+	objective-2-lfw-fine-tuning/exp/lfw_index_itr1.ann
+	objective-2-lfw-fine-tuning/exp/model_lfw_itr1.pth
+	objective-2-lfw-fine-tuning/exp/resnet50_fullckpt.pth
