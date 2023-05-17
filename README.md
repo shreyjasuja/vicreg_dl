@@ -28,8 +28,7 @@ python main_vicreg.py --batch-size 512 --mlp '512-512-512'
 ```
 Step 4: Run the notebook ssl_eval.ipynb to reproduce the results.
 
-[Add accuracies table screenshot]
-
+![WhatsApp Image 2023-05-16 at 11 43 34 PM](https://github.com/shreyjasuja/vicreg_dl/assets/30201131/364547bc-9ae1-4ba9-b1b5-512aa60aa94e)
 ![download](https://github.com/shreyjasuja/vicreg_dl/assets/30201131/0228baeb-859c-49b8-9e4c-74f06e30507c)
 
 ## Objective 2: Fine tuning trained SSL model on LFW dataset
